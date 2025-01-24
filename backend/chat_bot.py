@@ -1,7 +1,6 @@
 """
 Chat Bot Functions
 """
-import time
 from typing import List
 import openai
 from translate import Translator
@@ -40,19 +39,13 @@ def translation_generator(message: str):
     """
     translator = Translator(from_lang="sw", to_lang="en")
     translation = translator.translate(message)
-    for word in translation.split():
-        yield word + " "
-        time.sleep(0.05)
+    print(translation)
+    return translation
 
 def transcribe_audio(audio_file, api_key: str):
     """
     Transcribes an audio file to text.
     """
-    # audio_data, _ = sf.read(audio_file)  # Load audio file
-    # audio_array = np.array(audio_data, dtype=np.float32)  # Convert to float32 array
-
-    # whisper_model = whisper.load_model("medium")
-    # transcription = whisper_model.transcribe(audio_array)
     openai.api_key = api_key
     transcription = openai.audio.transcriptions.create(
         model="whisper-1",

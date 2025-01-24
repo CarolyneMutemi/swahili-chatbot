@@ -11,24 +11,35 @@ st.caption('Hello! How can I help you today? 🙂')
 # Initialize session state variables
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    st.session_state.display = []
 if "prompt" not in st.session_state:
     st.session_state.prompt = ""
 if "recording" not in st.session_state:
     st.session_state["recording"] = False
 if "audio_submitted" not in st.session_state:
     st.session_state.audio_submitted = False
+    
 
 # Sidebar elements
 if st.sidebar.button("New Chat"):
     st.session_state.messages = []
+    st.session_state.display = []
 
 if api_key := st.sidebar.text_input(label='API Key', placeholder='your-openai-api-key', key='api_key', max_chars=200):
     st.toast("API Key saved successfully!", icon="✅")
 
 # Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message['role']):
-        st.write(message['content'])
+for message in st.session_state.display:
+    role = message['role']
+    with st.chat_message(role):
+        if role == 'assistant':
+            tab_a, tab_b = st.tabs(["Swahili", "English"])
+            with tab_a:
+                st.write(message['content']['Swahili'])
+            with tab_b:
+                st.write(message['content']['English'])
+        else:
+            st.write(message['content'])
 
 # Create a container for the input area
 input_container = st.container()
@@ -81,18 +92,21 @@ with input_container:
 
             # Add user message to chat history
             st.session_state.messages.append({'role': 'user', 'content': st.session_state.prompt})
+            st.session_state.display.append({'role': 'user', 'content': st.session_state.prompt})
 
             # Generate and display response
             with st.chat_message("assistant"):
                 tab1, tab2 = st.tabs(["Swahili", "English"])
                 with st.spinner('...'):
                     with tab1:
-                        response = st.write_stream(response_generator(st.session_state.messages, api_key))
+                        swahili_response = st.write_stream(response_generator(st.session_state.messages, api_key))
                     with tab2:
-                        st.write_stream(translation_generator(response))
+                        english_response = translation_generator(swahili_response)
+                        st.markdown(english_response)
 
             # Add response to chat history
-            st.session_state.messages.append({'role': 'assistant', 'content': response})
+            st.session_state.messages.append({'role': 'assistant', 'content': swahili_response})
+            st.session_state.display.append({'role': 'assistant', 'content': {'Swahili': swahili_response, 'English': english_response}})
 
             # Reset prompt and audio submission state
             st.session_state.prompt = ""
