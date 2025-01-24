@@ -1,9 +1,14 @@
 """
 Swahili Chat Bot with Consistent Chat Input Layout
 """
+import os
 import streamlit as st
+from dotenv import load_dotenv
 
 from backend.chat_bot import response_generator, translation_generator, transcribe_audio
+
+
+load_dotenv()
 
 st.title('Jambo! Nikusaidieje leo? 🙂')
 st.caption('Hello! How can I help you today? 🙂')
@@ -18,7 +23,6 @@ if "recording" not in st.session_state:
     st.session_state["recording"] = False
 if "audio_submitted" not in st.session_state:
     st.session_state.audio_submitted = False
-    
 
 # Sidebar elements
 if st.sidebar.button("New Chat"):
@@ -27,6 +31,8 @@ if st.sidebar.button("New Chat"):
 
 if api_key := st.sidebar.text_input(label='API Key', placeholder='your-openai-api-key', key='api_key', max_chars=200):
     st.toast("API Key saved successfully!", icon="✅")
+elif not api_key:
+    api_key = os.getenv("OPENAI_API_KEY", None)
 
 # Display chat history
 for message in st.session_state.display:
@@ -67,14 +73,17 @@ if True:
             audio_file = st.audio_input("Record a voice message.")
             if audio_file and not st.session_state.audio_submitted:
                 with st.spinner("Converting audio to text..."):
-                    transcribed_text = transcribe_audio(audio_file, st.session_state.api_key)
-                    converted_text = st.text_area("Converted text", transcribed_text)
-                    if st.button("Submit"):
-                        st.session_state.prompt = converted_text
-                        st.session_state.audio_submitted = True
-                        st.session_state.recording = False
-                        # Rerun to refresh the UI
-                        st.rerun()
+                    try:
+                        transcribed_text = transcribe_audio(audio_file, api_key)
+                        extracted_text = st.text_area("Transcribed text", transcribed_text)
+                        if st.button("Submit"):
+                            st.session_state.prompt = extracted_text
+                            st.session_state.audio_submitted = True
+                            st.session_state.recording = False
+                            # Rerun to refresh the UI
+                            st.rerun()
+                    except Exception as exc:
+                        st.error(f"Oops! {exc}!", icon="🚨")
         else:
             user_input = st.chat_input("Say something...")
             if user_input:

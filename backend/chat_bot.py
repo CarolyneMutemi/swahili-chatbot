@@ -5,6 +5,7 @@ from typing import List
 import openai
 from translate import Translator
 
+
 def response_generator(active_messages: List, api_key: str):
     """
     Replies to the prompt using OpenAI's GPT-3 engine.
