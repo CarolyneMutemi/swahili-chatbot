@@ -18,7 +18,7 @@ def response_generator(active_messages: List, api_key: str):
 
         # Generate response
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                 {"role": "system",
                  "content": "You are a helpful Swahili assistant that expects a prompt in Swahili and answers in Swahili. If you get a prompt in English or any other language that is not Swahili, you should still respond in Swahili"},
