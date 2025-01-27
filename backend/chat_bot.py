@@ -1,12 +1,42 @@
 """
 Chat Bot Functions
 """
+import os
 from typing import List
 import openai
 from translate import Translator
+import anthropic
+from dotenv import load_dotenv
+
+load_dotenv()
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT")
 
 
-def response_generator(active_messages: List, api_key: str):
+def anthropic_response_generator(active_messages: List, api_key: str, model: str):
+    """
+    Replies to the prompt using Anthropic's claude 3.5 sonnet engine.
+    """
+    client = anthropic.Anthropic(api_key=api_key)
+
+    if not active_messages:
+        raise ValueError("Please provide a prompt.")
+
+    try:
+        response = client.messages.create(
+            model=model,
+            max_tokens=2000,
+            temperature=1,
+            system=SYSTEM_PROMPT,
+            messages=active_messages,
+            stream=True
+        )
+        print(response)
+        return response
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise e
+
+def openai_response_generator(active_messages: List, api_key: str, model: str):
     """
     Replies to the prompt using OpenAI's GPT-3 engine.
     """
@@ -18,10 +48,10 @@ def response_generator(active_messages: List, api_key: str):
 
         # Generate response
         response = openai.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=[
                 {"role": "system",
-                 "content": "You are a helpful Swahili assistant that expects a prompt in Swahili and answers in Swahili. If you get a prompt in English or any other language that is not Swahili, you should still respond in Swahili"},
+                 "content": SYSTEM_PROMPT},
                 *active_messages,
             ],
             stream=True
@@ -40,10 +70,9 @@ def translation_generator(message: str):
     """
     translator = Translator(from_lang="sw", to_lang="en")
     translation = translator.translate(message)
-    print(translation)
     return translation
 
-def transcribe_audio(audio_file, api_key: str):
+def openai_transcribe_audio(audio_file, api_key: str):
     """
     Transcribes an audio file to text.
     """
